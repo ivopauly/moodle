@@ -1996,7 +1996,7 @@ class core_renderer extends renderer_base {
         $button = new single_button($url, $label, $method);
 
         foreach ((array)$options as $key=>$value) {
-            if (array_key_exists($key, $button)) {
+            if (property_exists($button, $key)) {
                 $button->$key = $value;
             } else {
                 $button->set_attribute($key, $value);
@@ -2479,7 +2479,7 @@ class core_renderer extends renderer_base {
     public function user_picture(stdClass $user, array $options = null) {
         $userpicture = new user_picture($user);
         foreach ((array)$options as $key=>$value) {
-            if (array_key_exists($key, $userpicture)) {
+            if (property_exists($userpicture, $key)) {
                 $userpicture->$key = $value;
             }
         }
@@ -2807,8 +2807,8 @@ EOD;
             $output .= $this->header();
         }
 
-        $message = '<p class="errormessage">' . $message . '</p>'.
-                '<p class="errorcode"><a href="' . $moreinfourl . '">' .
+        $message = '<p class="errormessage">' . s($message) . '</p>'.
+                '<p class="errorcode"><a href="' . s($moreinfourl) . '">' .
                 get_string('moreinformation') . '</a></p>';
         if (empty($CFG->rolesactive)) {
             $message .= '<p class="errormessage">' . get_string('installproblem', 'error') . '</p>';
@@ -4511,10 +4511,12 @@ EOD;
      * @param int $limit limit the number of tags to display, if size of $tags is more than this limit the "more" link
      *               will be appended to the end, JS will toggle the rest of the tags
      * @param context $pagecontext specify if needed to overwrite the current page context for the view tag link
+     * @param bool $accesshidelabel if true, the label should have class="accesshide" added.
      * @return string
      */
-    public function tag_list($tags, $label = null, $classes = '', $limit = 10, $pagecontext = null) {
-        $list = new \core_tag\output\taglist($tags, $label, $classes, $limit, $pagecontext);
+    public function tag_list($tags, $label = null, $classes = '', $limit = 10,
+            $pagecontext = null, $accesshidelabel = false) {
+        $list = new \core_tag\output\taglist($tags, $label, $classes, $limit, $pagecontext, $accesshidelabel);
         return $this->render_from_template('core_tag/taglist', $list->export_for_template($this));
     }
 

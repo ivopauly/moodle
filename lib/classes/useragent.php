@@ -138,6 +138,18 @@ class core_useragent {
     }
 
     /**
+     * Get the MoodleBot UserAgent for this site.
+     *
+     * @return string UserAgent
+     */
+    public static function get_moodlebot_useragent() {
+        global $CFG;
+
+        $version = moodle_major_version(); // Only major version for security.
+        return "MoodleBot/$version (+{$CFG->wwwroot})";
+    }
+
+    /**
      * Returns the user agent string.
      * @return bool|string The user agent string or false if one isn't available.
      */
@@ -215,7 +227,8 @@ class core_useragent {
      * @return bool
      */
     protected function is_useragent_web_crawler() {
-        $regex = '/Googlebot|google\.com|Yahoo! Slurp|\[ZSEBOT\]|msnbot|bingbot|BingPreview|Yandex|AltaVista|Baiduspider|Teoma/i';
+        $regex = '/MoodleBot|Googlebot|google\.com|Yahoo! Slurp|\[ZSEBOT\]|msnbot|bingbot|BingPreview|Yandex|AltaVista'
+                .'|Baiduspider|Teoma/i';
         return (preg_match($regex, $this->useragent));
     }
 
@@ -1110,8 +1123,7 @@ class core_useragent {
         $extension = strtolower($extension);
 
         $supportedvideo = array('m4v', 'webm', 'ogv', 'mp4', 'mov');
-        $supportedaudio = array('ogg', 'oga', 'aac', 'm4a', 'mp3', 'wav');
-        // TODO MDL-56549 Flac will be supported in Firefox 51 in January 2017.
+        $supportedaudio = array('ogg', 'oga', 'aac', 'm4a', 'mp3', 'wav', 'flac');
 
         // Basic extension support.
         if (!in_array($extension, $supportedvideo) && !in_array($extension, $supportedaudio)) {
@@ -1143,6 +1155,11 @@ class core_useragent {
         // Ogg is not supported in IE, Edge and Safari.
         $isogg = in_array($extension, ['ogg', 'oga', 'ogv']);
         if ($isogg && (self::is_ie() || self::is_edge() || self::is_safari() || self::is_safari_ios())) {
+            return false;
+        }
+        // FLAC is not supported in IE and Edge (below 16.0).
+        if ($extension === 'flac' &&
+                (self::is_ie() || (self::is_edge() && !self::check_edge_version('16.0')))) {
             return false;
         }
         // Wave is not supported in IE.

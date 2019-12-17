@@ -534,6 +534,9 @@ global $FULLSCRIPT;
  */
 global $SCRIPT;
 
+// The httpswwwroot has been deprecated, we keep it as an alias for backwards compatibility with plugins only.
+$CFG->httpswwwroot = $CFG->wwwroot;
+
 require_once($CFG->libdir .'/setuplib.php');        // Functions that MUST be loaded first
 
 if (NO_OUTPUT_BUFFERING) {
@@ -561,6 +564,11 @@ if (!PHPUNIT_TEST or PHPUNIT_UTIL) {
 if (defined('BEHAT_SITE_RUNNING') && !defined('BEHAT_TEST') && !defined('BEHAT_UTIL')) {
     require_once(__DIR__ . '/behat/lib.php');
     set_error_handler('behat_error_handler', E_ALL | E_STRICT);
+}
+
+if (defined('WS_SERVER') && WS_SERVER) {
+    require_once($CFG->dirroot . '/webservice/lib.php');
+    set_exception_handler('early_ws_exception_handler');
 }
 
 // If there are any errors in the standard libraries we want to know!

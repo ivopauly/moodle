@@ -33,6 +33,13 @@ require_login();
 $model = new \core_analytics\model($id);
 \core_analytics\manager::check_can_manage_models();
 
+if (!\core_analytics\manager::is_analytics_enabled()) {
+    $PAGE->set_context(\context_system::instance());
+    $renderer = $PAGE->get_renderer('tool_analytics');
+    echo $renderer->render_analytics_disabled();
+    exit(0);
+}
+
 $returnurl = new \moodle_url('/admin/tool/analytics/index.php');
 $params = array('id' => $id, 'action' => $action);
 $url = new \moodle_url('/admin/tool/analytics/model.php', $params);
@@ -125,7 +132,9 @@ switch ($action) {
             'targetname' => $model->get_target()->get_name(),
             'indicators' => $model->get_potential_indicators(),
             'timesplittings' => $potentialtimesplittings,
-            'predictionprocessors' => \core_analytics\manager::get_all_prediction_processors()
+            'predictionprocessors' => \core_analytics\manager::get_all_prediction_processors(),
+            'supportscontexts' => ($model->get_analyser(['notimesplitting' => true]))::context_restriction_support(),
+            'contexts' => $model->get_contexts(),
         );
         $mform = new \tool_analytics\output\form\edit_model(null, $customdata);
 
@@ -150,7 +159,11 @@ switch ($action) {
                 $predictionsprocessor = false;
             }
 
-            $model->update($data->enabled, $indicators, $timesplitting, $predictionsprocessor);
+            if (!isset($data->contexts)) {
+                $data->contexts = null;
+            }
+
+            $model->update($data->enabled, $indicators, $timesplitting, $predictionsprocessor, $data->contexts);
             redirect($returnurl);
         }
 
@@ -161,6 +174,9 @@ switch ($action) {
         $callable = array('\tool_analytics\output\helper', 'class_to_option');
         $modelobj->indicators = array_map($callable, json_decode($modelobj->indicators));
         $modelobj->timesplitting = \tool_analytics\output\helper::class_to_option($modelobj->timesplitting);
+        if ($modelobj->contextids) {
+            $modelobj->contexts = array_map($callable, json_decode($modelobj->contextids));
+        }
         $modelobj->predictionsprocessor = \tool_analytics\output\helper::class_to_option($modelobj->predictionsprocessor);
         $mform->set_data($modelobj);
         $mform->display();
